@@ -6,17 +6,23 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.easyprep.common.ErrorCode;
 import com.easyprep.constant.CommonConstant;
+import com.easyprep.exception.BusinessException;
 import com.easyprep.exception.ThrowUtils;
 import com.easyprep.mapper.QuestionBankQuestionMapper;
 import com.easyprep.model.dto.questionBankQuestion.QuestionBankQuestionQueryRequest;
+import com.easyprep.model.entity.Question;
+import com.easyprep.model.entity.QuestionBank;
 import com.easyprep.model.entity.QuestionBankQuestion;
 import com.easyprep.model.entity.User;
 import com.easyprep.model.vo.QuestionBankQuestionVO;
 import com.easyprep.model.vo.UserVO;
 import com.easyprep.service.QuestionBankQuestionService;
+import com.easyprep.service.QuestionBankService;
+import com.easyprep.service.QuestionService;
 import com.easyprep.service.UserService;
 import com.easyprep.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -41,6 +47,12 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
     @Resource
     private UserService userService;
 
+    @Resource
+    private QuestionBankService questionBankService;
+
+    @Resource
+    private QuestionService questionService;
+
     /**
      * 校验数据
      *
@@ -50,6 +62,19 @@ public class QuestionBankQuestionServiceImpl extends ServiceImpl<QuestionBankQue
     @Override
     public void validQuestionBankQuestion(QuestionBankQuestion questionBankQuestion, boolean add) {
         ThrowUtils.throwIf(questionBankQuestion == null, ErrorCode.PARAMS_ERROR);
+        // 题目和题库必须存在
+        Long questionId = questionBankQuestion.getQuestionId();
+        if(questionId != null) {
+            Question question = questionService.getById(questionId);
+            ThrowUtils.throwIf(question == null, ErrorCode.NOT_FOUND_ERROR, "题目不存在");
+        }
+        Long questionBankId = questionBankQuestion.getQuestionBankId();
+        if(questionBankId != null) {
+            QuestionBank questionBank = questionBankService.getById(questionBankId);
+            ThrowUtils.throwIf(questionBank == null, ErrorCode.NOT_FOUND_ERROR, "题库不存在");
+        }
+
+
         // 不需要校验 id
 //        // todo 从对象中取值
 //        String title = questionBankQuestion.getTitle();
